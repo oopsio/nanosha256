@@ -11,7 +11,10 @@ $(EXE): $(SRC) nanosha256.h
 test: $(EXE)
 	./$(EXE)
 
-clean:
-	rm -f $(EXE)
+docs:
+	bun docs/build.js
 
-.PHONY: all test clean
+clean:
+	rm -f $(EXE) docs/dist/*
+
+.PHONY: all test clean docs

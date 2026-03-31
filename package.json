@@ -1,0 +1,17 @@
+{
+  "name": "nanosha256",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@swc/core": "^1.15.21",
+    "@swc/html": "^1.15.21",
+    "marked": "^17.0.5"
+  }
+}
