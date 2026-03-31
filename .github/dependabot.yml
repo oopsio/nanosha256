@@ -1,0 +1,22 @@
+version: 2
+updates:
+  # Monitor your package.json for security updates and new versions
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      deps-updates:
+        patterns:
+          - "*"
+
+  # Monitor your GitHub Actions (CI workflows)
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      actions-updates:
+        patterns:
+          - "*"
