@@ -1,6 +1,12 @@
-# nanosha256
+# nanosha256 - v1.0.0
 
-A minimal, single-header C library for SHA-256.
+A minimal, high-performance, security-hardened single-header C library for SHA-256.
+
+[![Changelog](https://img.shields.io/badge/changelog-v1.0.0-blue.svg)](CHANGELOG.md)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![C/C++ CI](https://github.com/oopsio/nanosha256/actions/workflows/c-cpp.yml/badge.svg)](https://github.com/oopsio/nanosha256/actions/workflows/c-cpp.yml)
+[![Build and Deploy Docs](https://github.com/oopsio/nanosha256/actions/workflows/docs.yml/badge.svg)](https://github.com/oopsio/nanosha256/actions/workflows/docs.yml)
+[![Dependabot](https://img.shields.io/badge/dependabot-enabled-green.svg)](https://github.com/oopsio/nanosha256/security/dependabot)
 
 ## Features
 - **Pure C**: Requires only `stdint.h` and `string.h`.
