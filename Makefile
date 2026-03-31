@@ -5,7 +5,7 @@ SRC = test.c
 
 all: $(EXE)
 
-$(EXE): $(SRC) sha256.h
+$(EXE): $(SRC) nanosha256.h
 	$(CC) $(CFLAGS) -o $(EXE) $(SRC)
 
 test: $(EXE)

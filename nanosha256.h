@@ -1,11 +1,12 @@
-#ifndef SHA256_H
-#define SHA256_H
+#ifndef NANOSHA256_H
+#define NANOSHA256_H
 
 /**
  * © 2026-present oopsio
- * nanosha256
- * Author: oopsio
- * Licensed under the MIT License
+ * nanosha256 - Security Refactored Version
+ * 
+ * High-performance, memory-safe, single-header SHA-256 library.
+ * Features: NULL protection, overflow guards, and secure memory cleanup.
  */
 
 #include <stdint.h>
@@ -15,6 +16,7 @@
 extern "C" {
 #endif
 
+/* --- Intrinsic Endian Optimization --- */
 
 #if defined(__GNUC__) || defined(__clang__)
     #define SHA256_BSWAP32(x) __builtin_bswap32(x)
@@ -32,6 +34,7 @@ extern "C" {
     }
 #endif
 
+/* Detect Little Endian for fast block loading */
 #if (defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__) || \
     defined(_WIN32) || defined(__i386__) || defined(__x86_64__) || defined(__ARMEL__)
     #define SHA256_LITTLE_ENDIAN
@@ -45,6 +48,7 @@ extern "C" {
     #define BE64(x) (x)
 #endif
 
+/* --- SHA-256 Core Inline Macros (Inlined for speed) --- */
 
 #define SHA256_ROTR(x, n)  (((x) >> (n)) | ((x) << (32 - (n))))
 #define SHA256_CH(x, y, z) (((x) & (y)) ^ (~(x) & (z)))
@@ -55,14 +59,12 @@ extern "C" {
 #define SHA256_SIG0(x) (SHA256_ROTR(x, 7) ^ SHA256_ROTR(x, 18) ^ ((x) >> 3))
 #define SHA256_SIG1(x) (SHA256_ROTR(x, 17) ^ SHA256_ROTR(x, 19) ^ ((x) >> 10))
 
-/* Compression round macro to avoid function call overhead */
 #define SHA256_ROUND(a, b, c, d, e, f, g, h, k, w) do { \
     uint32_t t1 = (h) + SHA256_EP1(e) + SHA256_CH(e, f, g) + (k) + (w); \
     uint32_t t2 = SHA256_EP0(a) + SHA256_MAJ(a, b, c); \
     (d) += t1; \
     (h) = t1 + t2; \
 } while (0)
-
 
 static const uint32_t SHA256_K[64] = {
     0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
@@ -75,11 +77,13 @@ static const uint32_t SHA256_K[64] = {
     0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
 };
 
+/* --- Public API --- */
 
 /**
- * Initializes the SHA-256 state with FIPS 180-4 constants.
+ * Initializes the SHA-256 state. Returns 0 on success, -1 on NULL.
  */
-static inline void sha256_init(uint32_t state[8]) {
+static inline int sha256_init(uint32_t state[8]) {
+    if (!state) return -1;
     state[0] = 0x6a09e667;
     state[1] = 0xbb67ae85;
     state[2] = 0x3c6ef372;
@@ -88,16 +92,19 @@ static inline void sha256_init(uint32_t state[8]) {
     state[5] = 0x9b05688c;
     state[6] = 0x1f83d9ab;
     state[7] = 0x5be0cd19;
+    return 0;
 }
 
 /**
- * Processes a single 512-bit (64-byte) block.
+ * Processes a single 64-byte block. Returns 0 on success.
  */
-static inline void sha256_transform(uint32_t state[8], const uint8_t data[64]) {
+static inline int sha256_transform(uint32_t state[8], const uint8_t data[64]) {
+    if (!state || !data) return -1;
     uint32_t a = state[0], b = state[1], c = state[2], d = state[3];
     uint32_t e = state[4], f = state[5], g = state[6], h = state[7];
     uint32_t w[64];
     
+    /* Alignment Safety: Use memcpy to load data into the work array */
     for (int i = 0; i < 16; i++) {
         uint32_t val;
         memcpy(&val, data + i * 4, 4);
@@ -108,6 +115,7 @@ static inline void sha256_transform(uint32_t state[8], const uint8_t data[64]) {
         w[i] = SHA256_SIG1(w[i - 2]) + w[i - 7] + SHA256_SIG0(w[i - 15]) + w[i - 16];
     }
 
+    /* Unrolled Compression Rounds */
     SHA256_ROUND(a, b, c, d, e, f, g, h, SHA256_K[0],  w[0]);
     SHA256_ROUND(h, a, b, c, d, e, f, g, SHA256_K[1],  w[1]);
     SHA256_ROUND(g, h, a, b, c, d, e, f, SHA256_K[2],  w[2]);
@@ -182,23 +190,23 @@ static inline void sha256_transform(uint32_t state[8], const uint8_t data[64]) {
 
     state[0] += a; state[1] += b; state[2] += c; state[3] += d;
     state[4] += e; state[5] += f; state[6] += g; state[7] += h;
+    return 0;
 }
 
 /**
- * Finalizes the SHA-256 hash by converting the internal state into a big-endian byte array.
- * Note: This function assumes padding has already been performed via transform.
- * total_bits is passed to fulfill the requested API signature but is conceptually 
- * usually handled before calling this final block-to-hash conversion.
+ * Finalizes state into hash buffer. Returns 0 on success.
  */
-static inline void sha256_final(uint32_t state[8], uint8_t hash[32], uint64_t total_bits) {
+static inline int sha256_final(uint32_t state[8], uint8_t hash[32], uint64_t total_bits) {
+    if (!state || !hash) return -1;
     (void)total_bits; 
     for (int i = 0; i < 8; i++) {
         uint32_t val = BE32(state[i]);
         memcpy(hash + i * 4, &val, 4);
     }
+    return 0;
 }
 
-/* --- Contextual API for Streaming --- */
+/* --- High-Level Contextual API --- */
 
 typedef struct {
     uint32_t state[8];
@@ -206,12 +214,20 @@ typedef struct {
     uint8_t buffer[64];
 } SHA256_CTX;
 
-static inline void SHA256_Init(SHA256_CTX *ctx) {
+static inline int SHA256_Init(SHA256_CTX *ctx) {
+    if (!ctx) return -1;
     sha256_init(ctx->state);
     ctx->total_len = 0;
+    memset(ctx->buffer, 0, 64);
+    return 0;
 }
 
-static inline void SHA256_Update(SHA256_CTX *ctx, const void *data, size_t len) {
+static inline int SHA256_Update(SHA256_CTX *ctx, const void *data, size_t len) {
+    if (!ctx || !data) return -1;
+    
+    /* Integer Overflow Check */
+    if (len > (uint64_t)-1 - ctx->total_len) return -2;
+
     const uint8_t *p = (const uint8_t *)data;
     uint32_t left = (uint32_t)(ctx->total_len & 0x3F);
     uint32_t fill = 64 - left;
@@ -219,6 +235,7 @@ static inline void SHA256_Update(SHA256_CTX *ctx, const void *data, size_t len) 
     ctx->total_len += len;
 
     if (left && len >= fill) {
+        /* Buffer Bounds: left + fill is exactly 64 */
         memcpy(ctx->buffer + left, p, fill);
         sha256_transform(ctx->state, ctx->buffer);
         p += fill;
@@ -233,11 +250,15 @@ static inline void SHA256_Update(SHA256_CTX *ctx, const void *data, size_t len) 
     }
 
     if (len) {
+        /* Buffer Bounds: left is 0 or left + len < 64 */
         memcpy(ctx->buffer + left, p, len);
     }
+    return 0;
 }
 
-static inline void SHA256_Final(uint8_t hash[32], SHA256_CTX *ctx) {
+static inline int SHA256_Final(uint8_t hash[32], SHA256_CTX *ctx) {
+    if (!ctx || !hash) return -1;
+
     static const uint8_t padding[64] = { 0x80 };
     uint64_t total_bits = ctx->total_len << 3;
     uint32_t left = (uint32_t)(ctx->total_len & 0x3F);
@@ -245,15 +266,19 @@ static inline void SHA256_Final(uint8_t hash[32], SHA256_CTX *ctx) {
 
     SHA256_Update(ctx, padding, pad_len);
     
-    /* Append length in bits as 64-bit Big-Endian */
     uint64_t bits_be = BE64(total_bits);
     SHA256_Update(ctx, &bits_be, 8);
 
-    sha256_final(ctx->state, hash, total_bits);
+    int res = sha256_final(ctx->state, hash, total_bits);
+
+    /* Secure Cleanup: Wipe context from memory before returning */
+    memset(ctx, 0, sizeof(SHA256_CTX));
+    
+    return res;
 }
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* SHA256_H */
+#endif /* NANOSHA256_H */
