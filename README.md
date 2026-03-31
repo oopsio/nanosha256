@@ -1,3 +1,5 @@
+<div align="center">
+  
 # nanosha256 - v1.0.0
 
 A minimal, high-performance, security-hardened single-header C library for SHA-256.
@@ -13,6 +15,9 @@ A minimal, high-performance, security-hardened single-header C library for SHA-2
 - **Zero Allocation**: No `malloc` is used.
 - **Performance**: Fully unrolled compression rounds and inlined macros.
 - **Endianness Optimized**: Fast byte-swapping for little-endian architectures.
+  
+</div>
+
 
 ## Usage
 Simply include `nanosha256.h` in your project.
