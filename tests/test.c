@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
-#include "nanosha256.h"
+#include "../nanosha256.h"
 
 void print_hash(const char *label, uint8_t hash[32]) {
     printf("%-15s: ", label);

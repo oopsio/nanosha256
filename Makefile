@@ -1,7 +1,9 @@
 CC = gcc
 CFLAGS = -O3 -Wall -Wextra -std=c99
 EXE = test_sha256
-SRC = test.c
+SRC = ./tests/test.c
+EXE_CLI = test_cli_runner
+SRC_CLI = ./tests/cli.c
 
 all: $(EXE)
 
@@ -11,10 +13,15 @@ $(EXE): $(SRC) nanosha256.h
 test: $(EXE)
 	./$(EXE)
 
+test-bun: $(SRC_CLI) nanosha256.h
+	$(CC) $(CFLAGS) -o $(EXE_CLI) $(SRC_CLI)
+	bun tests/verify.js
+	rm -f $(EXE_CLI) $(EXE_CLI).exe
+
 docs:
 	bun docs/build.js
 
 clean:
-	rm -f $(EXE) docs/dist/*
+	rm -f $(EXE) $(EXE).exe $(EXE_CLI) $(EXE_CLI).exe docs/dist/*
 
-.PHONY: all test clean docs
+.PHONY: all test test-bun clean docs
