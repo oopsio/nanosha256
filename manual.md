@@ -1,6 +1,6 @@
 # nanosha256 - Technical Manual
 
-> Generated on: 2026-03-31
+> Generated on: 2026-04-01
 
 ---
 
