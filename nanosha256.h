@@ -16,7 +16,6 @@
 extern "C" {
 #endif
 
-/* --- Intrinsic Endian Optimization --- */
 
 #if defined(__GNUC__) || defined(__clang__)
     #define SHA256_BSWAP32(x) __builtin_bswap32(x)
@@ -48,7 +47,6 @@ extern "C" {
     #define BE64(x) (x)
 #endif
 
-/* --- SHA-256 Core Inline Macros (Inlined for speed) --- */
 
 #define SHA256_ROTR(x, n)  (((x) >> (n)) | ((x) << (32 - (n))))
 #define SHA256_CH(x, y, z) (((x) & (y)) ^ (~(x) & (z)))
@@ -77,7 +75,6 @@ static const uint32_t SHA256_K[64] = {
     0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
 };
 
-/* --- Public API --- */
 
 /**
  * Initializes the SHA-256 state. Returns 0 on success, -1 on NULL.
@@ -193,20 +190,7 @@ static inline int sha256_transform(uint32_t state[8], const uint8_t data[64]) {
     return 0;
 }
 
-/**
- * Finalizes state into hash buffer. Returns 0 on success.
- */
-static inline int sha256_final(uint32_t state[8], uint8_t hash[32], uint64_t total_bits) {
-    if (!state || !hash) return -1;
-    (void)total_bits; 
-    for (int i = 0; i < 8; i++) {
-        uint32_t val = BE32(state[i]);
-        memcpy(hash + i * 4, &val, 4);
-    }
-    return 0;
-}
 
-/* --- High-Level Contextual API --- */
 
 typedef struct {
     uint32_t state[8];
@@ -259,8 +243,13 @@ static inline int SHA256_Update(SHA256_CTX *ctx, const void *data, size_t len) {
 static inline int SHA256_Final(uint8_t hash[32], SHA256_CTX *ctx) {
     if (!ctx || !hash) return -1;
 
-    static const uint8_t padding[64] = { 0x80 };
-    uint64_t total_bits = ctx->total_len << 3;
+    static const uint8_t padding[64] = {
+        0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    };
+    uint64_t total_bits = (uint64_t)ctx->total_len << 3;
     uint32_t left = (uint32_t)(ctx->total_len & 0x3F);
     uint32_t pad_len = (left < 56) ? (56 - left) : (120 - left);
 
@@ -269,12 +258,16 @@ static inline int SHA256_Final(uint8_t hash[32], SHA256_CTX *ctx) {
     uint64_t bits_be = BE64(total_bits);
     SHA256_Update(ctx, &bits_be, 8);
 
-    int res = sha256_final(ctx->state, hash, total_bits);
+    /* Final state translation to hash buffer */
+    for (int i = 0; i < 8; i++) {
+        uint32_t val = BE32(ctx->state[i]);
+        memcpy(hash + i * 4, &val, 4);
+    }
 
     /* Secure Cleanup: Wipe context from memory before returning */
     memset(ctx, 0, sizeof(SHA256_CTX));
     
-    return res;
+    return 0;
 }
 
 #ifdef __cplusplus

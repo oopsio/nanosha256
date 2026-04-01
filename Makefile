@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -O3 -Wall -Wextra -std=c99
-EXE = test_sha256.exe
+EXE = test_sha256
 SRC = test.c
 
 all: $(EXE)
