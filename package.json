@@ -12,6 +12,6 @@
   "dependencies": {
     "@swc/core": "^1.15.21",
     "@swc/html": "^1.15.21",
-    "marked": "^17.0.5"
+    "marked": "^18.0.0"
   }
 }
